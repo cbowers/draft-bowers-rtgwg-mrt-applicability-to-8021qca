@@ -10,7 +10,7 @@
 <?rfc tocdepth="3"?>
 <?rfc tocindent="yes"?>
 <?rfc tocompact="yes"?>
-<rfc category="info" docName="draft-bowers-rtgwg-mrt-applicability-to-8021qca-00" ipr="trust200902" obsoletes="" updates="" submissionType="IETF" xml:lang="en">
+<rfc category="info" docName="draft-bowers-rtgwg-mrt-applicability-to-8021qca-01" ipr="trust200902" obsoletes="" updates="" submissionType="IETF" xml:lang="en">
   <front>
     <title abbrev="Applicability of MRT to IEEE 802.1Qca">
     Applicability of Maximally Redundant Trees to IEEE 802.1Qca Path Control and Reservation
@@ -43,7 +43,7 @@
    </address>
     </author>
 
-    <date day="13" month="February" year="2015"/>
+    <date day="26" month="June" year="2015"/>
 
     <area>Routing</area>
 
@@ -78,7 +78,7 @@
     assignment, and protection mechanisms for data flows for bridged networks.
     <xref target="IEEE8021Qca"/> is an extension to IS-IS that builds upon
     the ISIS-SPB extensions and extends them further as described in
-    <xref target="I-D.farkas-isis-pcr"/>. These extensions
+    <xref target="I-D.ietf-isis-pcr"/>. These extensions
     (referred to here as ISIS-PCR) allow bridges to share the information needed
     to construct explicit trees.
     </t>
@@ -114,7 +114,7 @@
     </t>     
     <section title="MRT Explicit Trees in 802.1Qca">
     <t> In <xref target="IEEE8021Qca"/>, the flooding of an SPB Instance sub-TLV (<xref target="RFC6329"/>) with the MRT ECT Algorithm value
-    in the absence of a Topology sub-TLV (<xref target="I-D.farkas-isis-pcr"/>) results in the creation of an MRT-Blue and an MRT-Red tree
+    in the absence of a Topology sub-TLV (<xref target="I-D.ietf-isis-pcr"/>) results in the creation of an MRT-Blue and an MRT-Red tree
     rooted at each node in the domain, and each tree spans all nodes in the domain. This is equivalent to the
     behavior described in <xref target="I-D.ietf-rtgwg-mrt-frr-algorithm"/>.  
     </t> 
@@ -177,6 +177,72 @@
 
     </section>
     
+	<section title="How 802.1Qca uses the MRTs"> 
+	
+    <t>  
+    MRTs are mainly intended to be used for non-learning VLANs, but they can be also used for learning VLANs. 
+	</t> 
+	
+	<t>
+	MAC addresses are not learnt from data frames in case of a non-learning VLAN, e.g. a VLAN supported by SPBM. The MAC of the root bridge (or its shorthand SPSourceID) identifies the tree, and a single Base VID identifies the entire forwarding plane. A single VID is used for all MRT-Blues supporting a VLAN and another VID is used for all MRT-Reds.
+	</t> 
+	
+	<t>
+	MAC addresses are learnt from data frames in case of a learning VLAN, e.g. a VLAN supported by SPBV. A unidirectional VID is assigned to each tree (similarly to the unidirectional SPVID model), so that each tree is independent and identifies its root bridge. If a learning VLAN is supported by MRTs, then a distinct VID is assigned to MRT-Blue and another VID is assigned to MRT-Red of each MRT Root. See more details on learning and non-learing VLANs in <xref target="IEEE8021Qca"/> and on their configuration in subclause 45.1.3.	
+    </t> 
+	
+	<t>  
+    The following sub-sections are applicable both to non-learning VLANs and learning VLANs.
+    </t> 
+	
+	
+    <section title="Protection Modes">
+    <t>  
+    MRTs can be used for the protection of SPTs in a bridged network similarly to IP/LDP FRR application of MRTs. A pair of MRT-Blue and MRT-Red then protect the SPT rooted at the MRT Root. MRTs can be only used for protection, i.e. MRTs do not carry traffic during normal operation, similarly to IP/LDP FRR operations.
+    </t> 
+	
+	<t>  
+    MRTs can be used to protect each other. If the MRTs are used in a primary and backup fashion, then MRT-Blue is the primary and MRT-Red is the backup. MRTs can be used in a 1+1 type of protection scheme when data frames are sent on both MRTs.
+    </t> 
+	</section>	 
+
+    <section title="Protection Mechanism">
+    <t>  
+     Point of Local Repair (PLR) nodes redirect traffic from SPTs to MRTs or from primary MRTs to backup MRTs upon a failure event if local protection mode, i.e. FRR is applied.	
+    </t> 
+	
+    <t>  
+    If a 1+1 type of protection scheme is used, then there is no need to react to a failure event as data frames are forwarded on both MRTs. There is no need for traffic redirection, i.e. there are no PLRs in this case.
+    </t> 	
+	
+    </section>	
+	
+	<section title="Restoration of MRTs">
+    <t>  
+    Restoration of MRTs follows the method specified in Section 12.2 of  <xref target="I-D.ietf-rtgwg-mrt-frr-architecture"/> with some extensions. MRTs have to be restored cautiously after a topology change. The restoration should not be initiated if there is any reason to suspect that the nodes of the domain do not share a common view on the network topology.
+    </t> 
+	
+	<t>
+	If MRTs are used for SPT protection, then MRTs are only restored after the restoration of the SPTs. As the topology change is announced by the corresponding LSPs, the nodes compute and install the new SPTs. If each node has installed the new SPT, then data traffic gets directed back to the SPTs. After that, the new MRTs are computed and installed.
+	</t> 
+	
+	<t>
+	If MRTs protect each other, then only one of the MRTs is restored at a time. When each SPT node has the same view on the network topology again, then the the new MRTs are computed. The broken MRT (e.g. MRT-Blue) then gets restored while the other MRT (e.g. MRT-Red) is not touched. If each node has installed the new MRT (e.g. the new MRT-Blue), then data traffic is directed to this newly restored MRT. The nodes then install the other MRT (e.g. the new MRT-Red). The same restoration procedure is followed if both MRTs are affected by the failure such that MRT-Blue gets restored first.
+	</t> 
+    
+	<t>
+	The method to be used for verifying whether or not the nodes have a common view on the topology and whether or not SPTs and MRTs have been restored is left to the implementer and the network operator. A common method is to wait a configured (or advertised) time period after the reception of the last LSP indicating a topology change as described e.g. in Section 12.2 of  <xref target="I-D.ietf-rtgwg-mrt-frr-architecture"/>. The Controlled Convergence sub-TLV specified in <xref target="I-D.ietf-isis-mrt"/> can be also used to determine how much time to wait.
+    </t>
+	
+    <t>	
+	Loop prevention has to be applied for MRTs during the period when they are being restored. The loop prevention method to be used for MRTs is the Agreement Protocol, which is specified in <xref target="IEEE8021aq"/> and also described in <xref target="AP"/>.
+	</t>
+	
+	</section>	
+	
+	</section>
+	
+	
     <section title="Other considerations"> 
     
     <section title="Unequal link metrics"> 
@@ -227,6 +293,12 @@
     
     </section>
     
+	<section title="Source Rooted Trees and Destination Rooted Trees">
+    <t>  
+	The MRT Lowpoint Algorithm <xref target="I-D.ietf-rtgwg-mrt-frr-algorithm"/> is specified in terms of determining next hop FIB entries towards a particular unicast destination. This generates a tree directed to the root, which is the destination. By inverting the direction of this destination rooted tree, a source rooted tree can be retrieved.	
+    </t> 
+    </section>
+	
     </section>
      
     
@@ -272,18 +344,28 @@
 		
     <reference anchor="IEEE8021Qca" target="http://www.ieee802.org/1/pages/802.1ca.html">
         <front>
-          <title>IEEE 802.1Qca Bridges and Bridged Networks - Amendment: Path Control and Reservation - Draft 1.4</title>
+          <title>IEEE 802.1Qca Bridges and Bridged Networks - Amendment: Path Control and Reservation - Draft 2.1</title>
           <author>
             <organization>IEEE 802.1</organization>
           </author>
-          <date year="(work in progress), February 12, 2015" />
+          <date year="(work in progress), June 23, 2015" />
         </front>
     </reference>
 
+	<reference anchor="AP" target="http://www.ieee802.org/1/files/public/docs2010/aq-seaman-agreement-protocol-0910-v2.pdf">
+        <front>
+          <title>Agreement Protocol</title>
+            <author initials="M." surname="Seaman"
+                       fullname="Mick Seaman">                   
+            </author>
+          <date year="September 7, 2010" />
+        </front>
+    </reference>
     
-    <?rfc include="http://xml.resource.org/public/rfc/bibxml3/reference.I-D.draft-farkas-isis-pcr-01.xml"?>
+    <?rfc include="http://xml.resource.org/public/rfc/bibxml3/reference.I-D.draft-ietf-isis-pcr-00.xml"?>
     <?rfc include="http://xml.resource.org/public/rfc/bibxml3/reference.I-D.draft-ietf-rtgwg-mrt-frr-algorithm-02.xml"?> 
     <?rfc include="http://xml.resource.org/public/rfc/bibxml3/reference.I-D.draft-ietf-rtgwg-mrt-frr-architecture-05.xml"?>   
+    <?rfc include="http://xml.resource.org/public/rfc/bibxml3/reference.I-D.draft-ietf-isis-mrt-00.xml"?>
     <?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.6329.xml"?>
     </references>
   </back>
