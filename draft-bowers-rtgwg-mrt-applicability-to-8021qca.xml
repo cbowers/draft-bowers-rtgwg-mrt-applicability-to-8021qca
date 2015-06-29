@@ -239,21 +239,29 @@
 	
     </section>	
 	
-    <section title="Restoration of MRTs">
+    <section title="Recalculation of MRTs">
     
-    <t>Restoration of MRTs follows the method specified in Section 12.2
-    of <xref target="I-D.ietf-rtgwg-mrt-frr-architecture"/> with some
-    extensions. MRTs have to be restored cautiously after a topology
-    change. The restoration should not be initiated if there is any
-    reason to suspect that the nodes of the domain do not share a
-    common view on the network topology.</t> 
-	
-    <t>If MRTs are used for SPT protection, then MRTs are only
-    restored after the restoration of the SPTs. As the topology change
-    is announced by the corresponding LSPs, the nodes compute and
-    install the new SPTs. If each node has installed the new SPT, then
-    data traffic gets directed back to the SPTs. After that, the new
-    MRTs are computed and installed.</t> 
+    <t>In 802.1Qca, recalculation of MRTs after a topology change
+    follows the general method specified in Section 12.2 of <xref
+    target="I-D.ietf-rtgwg-mrt-frr-architecture"/>, with an additional
+    requirement.  Immediately after a failure, the PLR or PLRs
+    redirect some traffic onto MRTs.  In the meantime, all nodes
+    receive notification of the failure, recompute SPTs, and install
+    them in their FIBs.  The PLRs take the traffic off of the MRTs,
+    and put the traffic on the new SPTs.  Based on <xref
+    target="I-D.ietf-rtgwg-mrt-frr-architecture"/> , at this point it
+    is safe recompute and install the new MRTs corresponding to the
+    new topology.</t>
+
+    <t>802.1Qca places an additional requirement on when it is safe to
+    install the new MRTs.  The new MRTs should not be recomputed and
+    installed if there is any reason to suspect that the nodes of the
+    domain do not share a common view on the network topology.  This
+    is in order to prevent loops in the MRT paths that may be used by
+    PLRs at the next failure event. The loop prevention method to be
+    used for MRTs in 802.1Qca is the Agreement Protocol, which is
+    specified in <xref target="IEEE8021aq"/> and also described in
+    <xref target="AP"/> </t>
 	
     <t>If MRTs protect each other, then only one of the MRTs is
     restored at a time. When each SPT node has the same view on the
@@ -265,24 +273,6 @@
     new MRT-Red). The same restoration procedure is followed if both
     MRTs are affected by the failure such that MRT-Blue gets restored
     first.</t> 
-    
-    <t> The method to be used for verifying whether or not the nodes
-    have a common view on the topology and whether or not SPTs and
-    MRTs have been restored is left to the implementer and the network
-    operator. A common method is to wait a configured (or advertised)
-    time period after the reception of the last LSP indicating a
-    topology change as described e.g. in Section 12.2 of <xref
-    target="I-D.ietf-rtgwg-mrt-frr-architecture"/>. The Controlled
-    Convergence sub-TLV specified in <xref
-    target="I-D.ietf-isis-mrt"/> can be also used to determine how
-    much time to wait.</t>
-	
-    <t> Loop prevention has to be applied for MRTs during the period
-    when they are being restored. The loop prevention method to be
-    used for MRTs is the Agreement Protocol, which is specified in
-    <xref target="IEEE8021aq"/> and also described in <xref
-    target="AP"/>. </t>
-	
     </section>	
 	
     </section>
