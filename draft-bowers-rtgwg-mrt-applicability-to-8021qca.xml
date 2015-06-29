@@ -200,14 +200,14 @@
     <t>MRTs are mainly intended to be used for non-learning VLANs, but
     they can be also used for learning VLANs.</t> 
 	
-    <t>MAC addresses are not learnt from data frames in case of a
+    <t>MAC addresses are not learned from data frames in the case of a
     non-learning VLAN, e.g. a VLAN supported by SPBM. The MAC of the
     root bridge (or its shorthand SPSourceID) identifies the tree, and
     a single Base VID identifies the entire forwarding plane. A single
     VID is used for all MRT-Blues supporting a VLAN and another VID is
-    used for all MRT-Reds. </t> 
+    used for all MRT-Reds. </t>
 	
-    <t> MAC addresses are learnt from data frames in case of a
+    <t> MAC addresses are learned from data frames in the case of a
     learning VLAN, e.g. a VLAN supported by SPBV. A unidirectional VID
     is assigned to each tree (similarly to the unidirectional SPVID
     model), so that each tree is independent and identifies its root
@@ -215,7 +215,7 @@
     VID is assigned to MRT-Blue and another VID is assigned to MRT-Red
     of each MRT Root. See more details on learning and non-learing
     VLANs in <xref target="IEEE8021Qca"/> and on their configuration
-    in subclause 45.1.3.</t> 
+    in subclause 45.1.3.</t>
 	
     <t>The following sub-sections are applicable both to non-learning
     VLANs and learning VLANs.</t> 
@@ -224,25 +224,18 @@
     <t>MRTs can be used for the protection of SPTs in a bridged
     network similarly to IP/LDP FRR application of MRTs. A pair of
     MRT-Blue and MRT-Red then protect the SPT rooted at the MRT
-    Root. MRTs can be only used for protection, i.e. MRTs do not carry
-    traffic during normal operation, similarly to IP/LDP FRR
-    operations.</t>
-	
+    Root. The MRTs are be only used for protection, i.e. MRTs do not
+    carry traffic during normal operation, similarly to IP/LDP FRR
+    operations.  In this mode, the Point of Local Repair (PLR) is
+    responsible for redirecting traffic from SPTs to MRTs upon
+    detection of a failure event.</t>
+
     <t>MRTs can be used to protect each other. If the MRTs are used in
     a primary and backup fashion, then MRT-Blue is the primary and
     MRT-Red is the backup. MRTs can be used in a 1+1 type of
-    protection scheme when data frames are sent on both MRTs.</t> 
-    </section>	 
-
-    <section title="Protection Mechanism">
-    <t>Point of Local Repair (PLR) nodes redirect traffic from SPTs to
-    MRTs or from primary MRTs to backup MRTs upon a failure event if
-    local protection mode, i.e. FRR is applied.</t> 
-	
-    <t>If a 1+1 type of protection scheme is used, then there is no
-    need to react to a failure event as data frames are forwarded on
-    both MRTs. There is no need for traffic redirection, i.e. there
-    are no PLRs in this case.</t> 	
+    protection scheme when data frames are sent on both MRTs.  In this
+    case, there is no need for a PLR to react to a failure event as
+    data frames are forwarded on both MRTs.</t>
 	
     </section>	
 	
