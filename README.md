@@ -10,5 +10,4 @@ You can generate the text version of the most recent XML commit by pasting the r
 http://xml2rfc.tools.ietf.org/
 
 https://raw.githubusercontent.com/cbowers/draft-bowers-rtgwg-mrt-applicability-to-8021qca/master/draft-bowers-rtgwg-mrt-applicability-to-8021qca.xml
- 
-# draft-bowers-rtgwg-mrt-applicability-to-8021qca
+
