@@ -43,7 +43,7 @@
    </address>
     </author>
 
-    <date day="26" month="June" year="2015"/>
+    <date day="3" month="July" year="2015"/>
 
     <area>Routing</area>
 
@@ -93,7 +93,8 @@
     methods of explicit trees are referred to as Strict Tree, Loose
     Tree, Loose Tree Set, MRT, and MRT with GADAG.  This document is
     concerned with the MRT and 'MRT with GAGAG' explicit tree methods
-    (algorithms). Both methods produce Maximally Redundant Trees.
+    (algorithms). Both methods produce Maximally Redundant Trees (MRTs) <xref
+    target="I-D.ietf-rtgwg-mrt-frr-architecture"/>.
     </t>
     
     <t> This document is intended to explain the relationship between
@@ -135,15 +136,15 @@
     including the Topology sub-TLV in the MT-Capability TLV (type 144
     <xref target="RFC6329"/>).  In the context of the MRT ECT
     Algorithm, Hop sub-TLVs in the Topology sub-TLV specify nodes with
-    flags that can indicate Root, Exclude, or Traffic End Point.  In
+    flags that can indicate Root, Exclude, or Edge Bridge.  In
     the context of the MRT algorithm, all nodes with the Exclude flag
     set are excluded from the MRT Island. The GADAG is then computed
     for the MRT Island.  For each node with the Root flag set, an
-    MRT-Blue and an MRT-tree rooted at that node is constructed.
+    MRT-Blue and an MRT-Red tree rooted at that node is constructed.
     </t> 
     <t>
-    Note that the Traffic End Point flag does not affect the
-    construction of the MRT trees.  It is used to determine which
+    Note that the Edge Bridge flag does not affect the
+    construction of the MRTs.  It is used to determine which
     filtering database (FDB) entries to install once the trees have
     been determined.
     </t> 
@@ -195,89 +196,6 @@
 
     </section>
     
-    <section title="How 802.1Qca uses the MRTs"> 
-	
-    <t>MRTs are mainly intended to be used for non-learning VLANs, but
-    they can be also used for learning VLANs.</t> 
-	
-    <t>MAC addresses are not learned from data frames in the case of a
-    non-learning VLAN, e.g. a VLAN supported by SPBM. The MAC of the
-    root bridge (or its shorthand SPSourceID) identifies the tree, and
-    a single Base VID identifies the entire forwarding plane. A single
-    VID is used for all MRT-Blues supporting a VLAN and another VID is
-    used for all MRT-Reds. </t>
-	
-    <t> MAC addresses are learned from data frames in the case of a
-    learning VLAN, e.g. a VLAN supported by SPBV. A unidirectional VID
-    is assigned to each tree (similarly to the unidirectional SPVID
-    model), so that each tree is independent and identifies its root
-    bridge. If a learning VLAN is supported by MRTs, then a distinct
-    VID is assigned to MRT-Blue and another VID is assigned to MRT-Red
-    of each MRT Root. See more details on learning and non-learing
-    VLANs in <xref target="IEEE8021Qca"/> and on their configuration
-    in subclause 45.1.3.</t>
-	
-    <t>The following sub-sections are applicable both to non-learning
-    VLANs and learning VLANs.</t> 
-	
-    <section title="Protection Modes">
-    <t>MRTs can be used for the protection of SPTs in a bridged
-    network similarly to IP/LDP FRR application of MRTs. A pair of
-    MRT-Blue and MRT-Red then protect the SPT rooted at the MRT
-    Root. The MRTs are be only used for protection, i.e. MRTs do not
-    carry traffic during normal operation, similarly to IP/LDP FRR
-    operations.  In this mode, the Point of Local Repair (PLR) is
-    responsible for redirecting traffic from SPTs to MRTs upon
-    detection of a failure event.</t>
-
-    <t>MRTs can be used to protect each other. If the MRTs are used in
-    a primary and backup fashion, then MRT-Blue is the primary and
-    MRT-Red is the backup. MRTs can be used in a 1+1 type of
-    protection scheme when data frames are sent on both MRTs.  In this
-    case, there is no need for a PLR to react to a failure event as
-    data frames are forwarded on both MRTs.</t>
-	
-    </section>	
-	
-    <section title="Recalculation of MRTs">
-    
-    <t>In 802.1Qca, recalculation of MRTs after a topology change
-    follows the general method specified in Section 12.2 of <xref
-    target="I-D.ietf-rtgwg-mrt-frr-architecture"/>, with an additional
-    requirement.  Immediately after a failure, the PLR or PLRs
-    redirect some traffic onto MRTs.  In the meantime, all nodes
-    receive notification of the failure, recompute SPTs, and install
-    them in their FIBs.  The PLRs take the traffic off of the MRTs,
-    and put the traffic on the new SPTs.  Based on <xref
-    target="I-D.ietf-rtgwg-mrt-frr-architecture"/> , at this point it
-    is safe recompute and install the new MRTs corresponding to the
-    new topology.</t>
-
-    <t>802.1Qca places an additional requirement on when it is safe to
-    install the new MRTs.  The new MRTs should not be recomputed and
-    installed if there is any reason to suspect that the nodes of the
-    domain do not share a common view on the network topology.  This
-    is in order to prevent loops in the MRT paths that may be used by
-    PLRs at the next failure event. The loop prevention method to be
-    used for MRTs in 802.1Qca is the Agreement Protocol, which is
-    specified in <xref target="IEEE8021aq"/> and also described in
-    <xref target="AP"/> </t>
-	
-    <t>If MRTs protect each other, then only one of the MRTs is
-    restored at a time. When each SPT node has the same view on the
-    network topology again, then the the new MRTs are computed. The
-    broken MRT (e.g. MRT-Blue) then gets restored while the other MRT
-    (e.g. MRT-Red) is not touched. If each node has installed the new
-    MRT (e.g. the new MRT-Blue), then data traffic is directed to this
-    newly restored MRT. The nodes then install the other MRT (e.g. the
-    new MRT-Red). The same restoration procedure is followed if both
-    MRTs are affected by the failure such that MRT-Blue gets restored
-    first.</t> 
-    </section>	
-	
-    </section>
-	
-	
     <section title="Other considerations"> 
     
     <section title="Unequal link metrics"> 
@@ -341,16 +259,46 @@
     </t> 
     
     </section>
-    
-    <section title="Source Rooted Trees and Destination Rooted Trees">
-    <t>The MRT Lowpoint Algorithm <xref
-    target="I-D.ietf-rtgwg-mrt-frr-algorithm"/> is specified in terms
-    of determining next hop FIB entries towards a particular unicast
-    destination. This generates a tree directed to the root, which is
-    the destination. By inverting the direction of this destination
-    rooted tree, a source rooted tree can be retrieved.
-    </t> 
-    </section>
+
+    <section title="Recalculation of MRTs">
+	
+    <t>MRTs can be used for the protection of SPTs in a bridged
+    network similarly to IP/LDP FRR application of MRTs. A pair of
+    MRT-Blue and MRT-Red then protect the SPT rooted at the MRT
+    Root. The MRTs are only used for protection, i.e. MRTs do not
+    carry traffic during normal operation, similarly to IP/LDP FRR
+    operations.  The Point of Local Repair (PLR) is responsible for
+    redirecting traffic from SPTs to MRTs upon detection of a failure
+    event.</t>
+
+    <t>In 802.1Qca, recalculation of MRTs after a topology change
+    follows the general method specified in Section 12.2 of <xref
+    target="I-D.ietf-rtgwg-mrt-frr-architecture"/>, with an additional
+    requirement.  Immediately after a failure, the PLR or PLRs
+    redirect some traffic onto MRTs.  In the meantime, all nodes
+    receive notification of the failure, recompute SPTs, and install
+    them in their FIBs.  The PLRs take the traffic off of the MRTs,
+    and put the traffic on the new SPTs.  Based on <xref
+    target="I-D.ietf-rtgwg-mrt-frr-architecture"/>, at this point it
+    is safe recompute and install the new MRTs corresponding to the
+    new topology.</t>
+
+    <t>802.1Qca places an additional requirement on when it is safe to
+    install the new MRTs.  The new MRTs should not be recomputed and
+    installed if there is any reason to suspect that the nodes of the
+    domain do not share a common view on the network topology.  This
+    is in order to prevent loops in the MRT paths that may be used by
+    PLRs at the next failure event. The loop prevention method to be
+    used for MRTs in 802.1Qca is the Agreement Protocol, which is
+    specified in <xref target="IEEE8021aq"/> and also described in
+    <xref target="AP"/>. </t>
+
+    <t> Note that while 802.1Qca requires that the Agreement Protocol
+    be used to avoid loops on MRTs, it does not mandate the use of the
+    Agreement Protocol for the shortest path trees, where other loop
+    mitigation techniques can be used.</t>
+
+    </section>	
 	
     </section>
      
@@ -359,7 +307,7 @@
     </section>
     
     <section title="Security Considerations">
-      <t> These ISIS-PCR extensions for the use of the MRT algorithm
+      <t> The ISIS-PCR extensions for the use of the MRT algorithm
       are not believed to introduce new security concerns.</t>
     </section>
 
@@ -422,7 +370,6 @@
     <?rfc include="http://xml.resource.org/public/rfc/bibxml3/reference.I-D.draft-ietf-isis-pcr-00.xml"?>
     <?rfc include="http://xml.resource.org/public/rfc/bibxml3/reference.I-D.draft-ietf-rtgwg-mrt-frr-algorithm-02.xml"?> 
     <?rfc include="http://xml.resource.org/public/rfc/bibxml3/reference.I-D.draft-ietf-rtgwg-mrt-frr-architecture-05.xml"?>   
-    <?rfc include="http://xml.resource.org/public/rfc/bibxml3/reference.I-D.draft-ietf-isis-mrt-00.xml"?>
     <?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.6329.xml"?>
     </references>
   </back>
